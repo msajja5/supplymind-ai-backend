@@ -8,15 +8,17 @@
     }
   },
   "routes": [
-    { "src": "/api/ingest/whatsapp", "dest": "/api/ingest/whatsapp.js" },
-    { "src": "/api/ingest/email",    "dest": "/api/ingest/email.js" },
-    { "src": "/api/ingest/csv",      "dest": "/api/ingest/csv.js" },
-    { "src": "/api/ingest",          "dest": "/api/ingest/index.js" },
-    { "src": "/api/transform",       "dest": "/api/transform.js" },
-    { "src": "/api/passport/(.*)",   "dest": "/api/passport.js" },
-    { "src": "/api/deliver",         "dest": "/api/deliver.js" },
-    { "src": "/api/health",          "dest": "/api/health.js" },
-    { "src": "/api/schema",          "dest": "/api/schema.js" }
+    { "src": "/api/ingest/whatsapp",  "dest": "/api/ingest/whatsapp.js" },
+    { "src": "/api/ingest/csv",        "dest": "/api/ingest/csv.js" },
+    { "src": "/api/ingest",            "dest": "/api/ingest/index.js" },
+    { "src": "/api/camera/upload",     "dest": "/api/camera/upload.js" },
+    { "src": "/api/camera/readings",   "dest": "/api/camera/readings.js" },
+    { "src": "/api/whatsapp-status",   "dest": "/api/whatsapp-status.js" },
+    { "src": "/api/transform",         "dest": "/api/transform.js" },
+    { "src": "/api/passport/(.*)",     "dest": "/api/passport.js" },
+    { "src": "/api/deliver",           "dest": "/api/deliver.js" },
+    { "src": "/api/health",            "dest": "/api/health.js" },
+    { "src": "/api/schema",            "dest": "/api/schema.js" }
   ],
   "headers": [
     {

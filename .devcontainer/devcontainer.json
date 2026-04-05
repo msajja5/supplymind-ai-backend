@@ -1,0 +1,41 @@
+{
+  "name": "SupplyMind AI Backend",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "18" },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Install Vercel CLI + ngrok globally on container start
+  "postCreateCommand": "npm install && npm install -g vercel@latest && echo '\n✅ SupplyMind AI ready! Run: npm run dev'",
+
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "SupplyMind API",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "humao.rest-client",
+        "rangav.vscode-thunder-client"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "remoteEnv": {
+    "NODE_ENV": "development",
+    "PORT": "3000",
+    "WHATSAPP_VERIFY_TOKEN": "supplymind_verify_2026"
+  }
+}
