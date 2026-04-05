@@ -1,115 +1,59 @@
-name: SupplyMind AI — CI Tests
+name: SupplyMind CI — E2E Validate & Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  test:
-    name: Unit Tests (Node 18)
+  validate:
+    name: 🧪 Validate + Test
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 18
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Run Jest unit tests
-        run: npm test
+      - name: 🧪 Run E2E test suite
+        run: npm run test:e2e
+
+      - name: ✅ Validate all layers
+        run: npm run validate
+
+  deploy:
+    name: 🚀 Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to Vercel (Production)
         env:
-          NODE_ENV: test
-          WHATSAPP_VERIFY_TOKEN: supplymind_verify_2026
-          SUPPLYMIND_API_KEY: sm_test_key
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/
-
-  integration:
-    name: Integration Tests (API endpoints)
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Start server in background
+          VERCEL_TOKEN:   ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID:  ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          NODE_ENV=test \
-          WHATSAPP_VERIFY_TOKEN=supplymind_verify_2026 \
-          SUPPLYMIND_API_KEY=sm_test_key \
-          node server.js &
-          sleep 3
-          echo "Server started"
-
-      - name: Health check
-        run: curl -sf http://localhost:3000/api/health | grep -q 'healthy'
-
-      - name: Schema check
-        run: curl -sf http://localhost:3000/api/schema | grep -q 'version'
-
-      - name: Webhook verification
-        run: |
-          RESULT=$(curl -sf 'http://localhost:3000/api/ingest/whatsapp?hub.mode=subscribe&hub.verify_token=supplymind_verify_2026&hub.challenge=TEST_CHALLENGE')
-          echo "Got: $RESULT"
-          echo "$RESULT" | grep -q 'TEST_CHALLENGE'
-
-      - name: Simulate invoice via WhatsApp
-        run: |
-          curl -sf -X POST http://localhost:3000/api/ingest/whatsapp \
-            -H 'Content-Type: application/json' \
-            -d '{"entry":[{"changes":[{"value":{"messages":[{"id":"CI-INV-001","from":"+919988776655","type":"document","timestamp":"1743870000","document":{"id":"FAKE001","mime_type":"application/pdf","filename":"invoice_zenith_april_2026.pdf"}}]}}]}]}'
-
-      - name: Simulate utility bill
-        run: |
-          curl -sf -X POST http://localhost:3000/api/ingest/whatsapp \
-            -H 'Content-Type: application/json' \
-            -d '{"entry":[{"changes":[{"value":{"messages":[{"id":"CI-UTIL-001","from":"+919988776655","type":"document","timestamp":"1743870000","document":{"id":"FAKE002","mime_type":"application/pdf","filename":"electricity_bill_march_2026.pdf"}}]}}]}]}'
-
-      - name: Simulate salary slip
-        run: |
-          curl -sf -X POST http://localhost:3000/api/ingest/whatsapp \
-            -H 'Content-Type: application/json' \
-            -d '{"entry":[{"changes":[{"value":{"messages":[{"id":"CI-SAL-001","from":"+919988776655","type":"document","timestamp":"1743870000","document":{"id":"FAKE003","mime_type":"application/pdf","filename":"salary_payslip_march_2026.pdf"}}]}}]}]}'
-
-      - name: Camera meter upload
-        run: |
-          curl -sf -X POST http://localhost:3000/api/camera/upload \
-            -H 'Content-Type: application/json' \
-            -d '{"meter_type":"energy","value":4250,"supplier_id":"ZAP-001","factory_id":"PUNE-01"}' \
-            | grep -q 'reading_id'
-
-      - name: Verify pipeline tables populated
-        run: |
-          STATUS=$(curl -sf http://localhost:3000/api/whatsapp-status)
-          echo "Pipeline status: $STATUS"
-          echo "$STATUS" | python3 -c "
-import sys, json
-d = json.load(sys.stdin)
-assert d['tables']['wa_messages'] >= 3, f\"Expected 3+ wa_messages, got {d['tables']['wa_messages']}\"
-assert d['tables']['wa_esg_entries'] >= 1, 'No ESG entries created'
-print('All pipeline assertions passed!')
-"
+          npm install -g vercel
+          vercel --prod --token=$VERCEL_TOKEN --yes
