@@ -1,9 +1,6 @@
 /**
  * server.js — Plain Node.js HTTP server for GitHub Codespaces / local dev
  * No Vercel CLI needed. Just run: node server.js
- *
- * Routes all /api/* requests to the correct handler file
- * Mirrors vercel.json routing exactly
  */
 
 import http from 'http';
@@ -23,16 +20,16 @@ import ingestCsvHandler       from './api/ingest/csv.js';
 import waStatusHandler        from './api/whatsapp-status.js';
 import cameraUploadHandler    from './api/camera/upload.js';
 import cameraReadingsHandler  from './api/camera/readings.js';
+import esgReportHandler       from './api/esg-report.js';
+
+// ── Start camera simulator (every 30 min) ───────────────────────────────────
+import { initScheduler } from './lib/scheduler.js';
+initScheduler();
 
 // ── Simple request adapter (Vercel req/res → Node req/res) ──────────────────
 function buildReq(nodeReq, body, parsedUrl) {
   const query = Object.fromEntries(parsedUrl.searchParams.entries());
-  return Object.assign(nodeReq, {
-    method: nodeReq.method,
-    url:    nodeReq.url,
-    query,
-    body,
-  });
+  return Object.assign(nodeReq, { method: nodeReq.method, url: nodeReq.url, query, body });
 }
 
 function buildRes(nodeRes) {
@@ -81,6 +78,7 @@ function getHandler(pathname) {
   if (pathname === '/api/whatsapp-status')      return waStatusHandler;
   if (pathname === '/api/camera/upload')        return cameraUploadHandler;
   if (pathname === '/api/camera/readings')      return cameraReadingsHandler;
+  if (pathname.startsWith('/api/esg-report'))   return esgReportHandler;
   return null;
 }
 
@@ -89,7 +87,6 @@ const server = http.createServer(async (nodeReq, nodeRes) => {
   const parsedUrl = new URL(nodeReq.url, `http://localhost:${PORT}`);
   const pathname  = parsedUrl.pathname;
 
-  // CORS preflight
   if (nodeReq.method === 'OPTIONS') {
     nodeRes.writeHead(200, {
       'Access-Control-Allow-Origin': '*',
@@ -100,7 +97,6 @@ const server = http.createServer(async (nodeReq, nodeRes) => {
     return;
   }
 
-  // Parse JSON body
   let body = {};
   if (['POST','PUT','PATCH'].includes(nodeReq.method)) {
     await new Promise(resolve => {
@@ -124,7 +120,8 @@ const server = http.createServer(async (nodeReq, nodeRes) => {
         '/api/health', '/api/schema', '/api/ingest',
         '/api/ingest/whatsapp', '/api/ingest/csv',
         '/api/transform', '/api/passport', '/api/deliver',
-        '/api/whatsapp-status', '/api/camera/upload', '/api/camera/readings',
+        '/api/whatsapp-status', '/api/camera/upload',
+        '/api/camera/readings', '/api/esg-report',
       ]
     }));
     return;
@@ -148,5 +145,6 @@ server.listen(PORT, () => {
   console.log(`\n${'='.repeat(55)}`);
   console.log(`  SupplyMind AI Backend — Running on port ${PORT}`);
   console.log(`  http://localhost:${PORT}/api/health`);
+  console.log(`  http://localhost:${PORT}/api/esg-report`);
   console.log(`${'='.repeat(55)}\n`);
 });
