@@ -1,22 +1,30 @@
 {
   "name": "supplymind-ai-backend",
-  "version": "1.0.0",
-  "description": "SupplyMind AI — Real-time data pipeline backend for India→EU aerospace supply chain",
+  "version": "2.0.0",
+  "description": "SupplyMind AI — Real-time ESG data pipeline. WhatsApp + Camera + PDF → ESG Passport + CBAM/CSRD compliance",
+  "type": "module",
+  "main": "api/health.js",
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'No build step — serverless functions'",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest",
-    "lint": "eslint api/ lib/"
+    "start": "vercel dev",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --testPathPattern=tests/ --coverage",
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
+    "simulate": "bash tests/simulate-whatsapp.sh",
+    "ngrok": "ngrok http ${PORT:-3000}"
   },
   "dependencies": {
-    "node-fetch": "^3.3.2"
+    "@supabase/supabase-js": "^2.39.0",
+    "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "@jest/globals": "^29.7.0"
+  },
+  "jest": {
+    "extensionsToTreatAsEsm": [".js"],
+    "transform": {}
   },
   "engines": {
-    "node": ">=18.x"
-  },
-  "license": "MIT"
+    "node": ">=18.0.0"
+  }
 }
