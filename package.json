@@ -3,14 +3,15 @@
   "version": "2.0.0",
   "description": "SupplyMind AI — Real-time ESG data pipeline. WhatsApp + Camera + PDF → ESG Passport + CBAM/CSRD compliance",
   "type": "module",
-  "main": "api/health.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "vercel dev",
-    "start": "vercel dev",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --testPathPattern=tests/ --coverage",
-    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
-    "simulate": "bash tests/simulate-whatsapp.sh",
-    "ngrok": "ngrok http ${PORT:-3000}"
+    "start":        "node server.js",
+    "dev":          "node server.js",
+    "dev:vercel":   "vercel dev",
+    "test":         "node --experimental-vm-modules node_modules/.bin/jest --testPathPattern=tests/ --coverage",
+    "test:watch":   "node --experimental-vm-modules node_modules/.bin/jest --watch",
+    "simulate":     "bash tests/simulate-whatsapp.sh",
+    "checklist":    "bash tests/codespaces-checklist.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
