@@ -1,43 +1,64 @@
 /**
  * GET  /api/esg-report            — all suppliers merged ESG report
  * GET  /api/esg-report?supplier=X — single supplier
- * POST /api/esg-report            — seed dummy data then return report
+ * GET  /api/esg-report?history=X  — ESG score history for supplier
+ * POST /api/esg-report            — seed dummy data (dev only) then return report
  */
 
-import { seedDummyData }    from '../lib/seed-dummy.js';
+import { seedDummyData }                    from '../lib/seed-dummy.js';
 import { mergeAllSuppliers, mergeAndScore } from '../lib/esg-merger.js';
+import { store }                            from '../lib/store.js';
+import { isConnected }                      from '../lib/supabase.js';
 
-export default function handler(req, res) {
-  if (req.method === 'POST') {
-    const result = seedDummyData();
-    const report = mergeAllSuppliers();
-    return res.status(200).json({
-      ok: true,
-      seed: result,
-      suppliers: report.length,
-      report,
-    });
-  }
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  if (req.method === 'GET') {
-    const sid = req.query?.supplier;
-    if (sid) {
-      try {
-        return res.status(200).json({ ok: true, report: mergeAndScore(sid) });
-      } catch (e) {
-        return res.status(404).json({ ok: false, error: e.message });
-      }
+  try {
+    // History endpoint
+    if (req.method === 'GET' && req.query?.history) {
+      const history = await store.getEsgHistory(req.query.history, 30);
+      return res.status(200).json({ ok: true, supplier_id: req.query.history, history });
     }
-    const report = mergeAllSuppliers();
-    if (report.length === 0) {
+
+    // Single supplier
+    if (req.method === 'GET' && req.query?.supplier) {
+      const report = await mergeAndScore(req.query.supplier);
+      return res.status(200).json({ ok: true, db: isConnected() ? 'supabase' : 'memory', report });
+    }
+
+    // All suppliers
+    if (req.method === 'GET') {
+      const report = await mergeAllSuppliers();
+      if (report.length === 0) {
+        return res.status(200).json({
+          ok: true,
+          db: isConnected() ? 'supabase' : 'memory',
+          message: 'No supplier data yet. POST /api/esg-report to seed (dev only).',
+          report: [],
+        });
+      }
       return res.status(200).json({
-        ok: true,
-        message: 'No data yet. POST /api/esg-report to seed dummy data.',
-        report: [],
+        ok: true, db: isConnected() ? 'supabase' : 'memory',
+        suppliers: report.length, report,
       });
     }
-    return res.status(200).json({ ok: true, suppliers: report.length, report });
-  }
 
-  res.status(405).json({ error: 'Method not allowed' });
+    // Seed (dev/staging only)
+    if (req.method === 'POST') {
+      if (process.env.NODE_ENV === 'production' && isConnected()) {
+        return res.status(403).json({ ok: false, error: 'Seeding disabled in production' });
+      }
+      const seed   = await seedDummyData();
+      const report = await mergeAllSuppliers();
+      return res.status(200).json({ ok: true, seed, suppliers: report.length, report });
+    }
+
+    res.status(405).json({ error: 'Method not allowed' });
+
+  } catch (err) {
+    console.error('[esg-report]', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
 }

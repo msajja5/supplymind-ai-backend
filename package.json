@@ -1,8 +1,8 @@
 {
   "name": "supplymind-ai-backend",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "type": "module",
-  "description": "SupplyMind AI — Supply Chain ESG + Carbon Backend",
+  "description": "SupplyMind AI — Supply Chain ESG + Carbon Backend (Supabase)",
   "main": "server.js",
   "scripts": {
     "start":     "node server.js",
@@ -12,6 +12,7 @@
     "validate":  "node --experimental-vm-modules node_modules/.bin/jest --forceExit && echo '\u2705 All checks passed'"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.43.5",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
@@ -19,7 +20,7 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "transform":       {},
+    "transform": {},
     "extensionsToTreatAsEsm": [".js"]
   }
 }

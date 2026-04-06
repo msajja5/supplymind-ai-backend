@@ -1,133 +1,93 @@
-# SupplyMind AI — Local Setup & WhatsApp Integration Guide
+# SupplyMind AI — Backend Setup & Deployment
 
-## Quick Start (5 minutes)
+## Stack
+- **Runtime**: Node.js 20 (ESM)
+- **API**: Vercel Serverless Functions
+- **Database**: Supabase (Postgres + RLS)
+- **Dev mode**: In-memory store (no DB needed)
 
+---
+
+## 1. Clone & Install
 ```bash
-# 1. Clone and install
 git clone https://github.com/msajja5/supplymind-ai-backend
 cd supplymind-ai-backend
 npm install
+```
 
-# 2. Copy env file
-cp .env.example .env.local
-# Edit .env.local with your credentials (see below)
+## 2. Environment Variables
+```bash
+cp .env.example .env
+# Fill in SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY
+```
 
-# 3. Start local server
+## 3. Supabase Setup (one-time)
+1. Go to [supabase.com](https://supabase.com) → New project
+2. Open **SQL Editor** → paste contents of `supabase/migrations/001_initial_schema.sql` → Run
+3. Copy `Project URL` and `service_role` key from **Settings → API**
+4. Paste into `.env`
+
+## 4. Run Locally
+```bash
 npm run dev
-# Server runs on http://localhost:3000
-
-# 4. Run all tests (no API key needed)
-npm test
-
-# 5. Simulate WhatsApp messages locally
-npm run simulate
+# Server at http://localhost:3000
 ```
 
----
-
-## Environment Variables to Fill
-
-Open `.env.local` and fill these:
-
-### Required for local testing (no external API)
-```env
-SUPPLYMIND_API_KEY=sm_dev_local_key
-WHATSAPP_VERIFY_TOKEN=supplymind_verify_2026
-```
-
-### Required for real WhatsApp (from Meta Developer Console)
-```env
-WHATSAPP_ACCESS_TOKEN=EAAxxxxx...          # From Meta App → WhatsApp → API Setup
-WHATSAPP_PHONE_NUMBER_ID=1234567890        # From same page
-WHATSAPP_BUSINESS_ACCOUNT_ID=9876543210   # From same page
-```
-
-### Required for Supabase persistence
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJxxx...
-```
-
----
-
-## WhatsApp Setup (Meta Developer Console)
-
-### Step 1 — Create Meta App
-1. Go to https://developers.facebook.com → My Apps → Create App
-2. Type: **Business** → Name: `SupplyMindDev`
-3. Dashboard → Add Product → **WhatsApp** → Set Up
-
-### Step 2 — Get Test Credentials
-In WhatsApp → API Setup:
-- Copy **Phone Number ID** → `WHATSAPP_PHONE_NUMBER_ID`
-- Copy **Access Token** → `WHATSAPP_ACCESS_TOKEN` (expires 24h)
-- For permanent token: Business Settings → System Users → Generate Token
-
-### Step 3 — Add Your Test Phone
-- "To" field → Manage phone number list → Add your number
-- Verify with OTP on WhatsApp
-- Up to 5 numbers free in dev mode
-
-### Step 4 — Set Webhook (needs ngrok)
+## 5. Test (memory mode — no Supabase needed)
 ```bash
-# Start ngrok tunnel
-npm run ngrok
-# Copy URL: https://abc123.ngrok-free.app
+npm run test:e2e
+npm run validate
 ```
-In Meta Console → WhatsApp → Configuration → Webhook:
-```
-Callback URL:  https://abc123.ngrok-free.app/api/ingest/whatsapp
-Verify Token:  supplymind_verify_2026
-```
-Subscribe to: **messages** ✓
 
-### Step 5 — Test Real WhatsApp
-Send any of these PDFs from your phone to the test number:
-- `sample_esg_invoice.pdf`
-- `sample_esg_utility_bill.pdf`
-- `sample_esg_salary_slip.pdf`
-
-Then check: http://localhost:3000/api/whatsapp-status
-
----
-
-## API Endpoints
-
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/health` | GET | Health check |
-| `/api/ingest/whatsapp` | GET | Meta webhook verification |
-| `/api/ingest/whatsapp` | POST | Receive WhatsApp messages |
-| `/api/whatsapp-status` | GET | All table counts + ESG summary |
-| `/api/camera/upload` | POST | Upload meter image |
-| `/api/camera/readings` | GET | List camera readings |
-| `/api/ingest` | POST | Direct ESG data ingest |
-| `/api/passport` | GET | List passports |
-| `/api/transform` | POST | Transform + calculate ESG |
-
----
-
-## Testing Without WhatsApp
-
+## 6. Deploy to Vercel
 ```bash
-# Simulate invoice PDF
-bash tests/simulate-whatsapp.sh
+# One-time login
+vercel login
+vercel link
 
-# Or curl manually
-curl -X POST http://localhost:3000/api/ingest/whatsapp \
-  -H "Content-Type: application/json" \
-  -d '{"entry":[{"changes":[{"value":{"messages":[{"id":"TEST-001","from":"+919988776655","type":"document","timestamp":"1743870000","document":{"id":"FAKE-MEDIA-ID","mime_type":"application/pdf","filename":"invoice_zenith_april_2026.pdf"}}]}}]}]}'
+# Add secrets to Vercel dashboard or CLI:
+vercel env add SUPABASE_URL
+vercel env add SUPABASE_SERVICE_ROLE_KEY
+vercel env add NODE_ENV   # set to 'production'
 
-# Check result
-curl http://localhost:3000/api/whatsapp-status
+# Deploy
+vercel --prod
 ```
+
+## 7. GitHub CI Auto-Deploy
+Add these 3 secrets in GitHub → Settings → Secrets → Actions:
+```
+VERCEL_TOKEN        ← vercel.com/account/tokens
+VERCEL_ORG_ID       ← cat .vercel/project.json | jq .orgId
+VERCEL_PROJECT_ID   ← cat .vercel/project.json | jq .projectId
+```
+Every push to `main` → tests run → auto-deploys if green.
 
 ---
 
-## Free Usage Limits
+## API Routes
 
-| Mode | Messages | Cost | How |
-|---|---|---|---|
-| Dev / Test mode | 1,000/month to 5 numbers | FREE | Just create Meta app |
-| Service conversations | Unlimited | FREE since Nov 2024 | Customer messages first |
-| Tier 1 (verified) | 1,000 users/day | FREE (service conv.) | Business verification |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | DB ping, store stats, version |
+| GET | `/api/esg-report` | All suppliers ESG report |
+| GET | `/api/esg-report?supplier=SUP001` | Single supplier |
+| GET | `/api/esg-report?history=SUP001` | ESG score history |
+| POST | `/api/esg-report` | Seed dummy data (dev only) |
+| GET | `/api/supplier-profile?id=SUP001` | Get green profile |
+| POST | `/api/supplier-profile` | Update green profile + recalc |
+| GET | `/api/passport` | List passports |
+| POST | `/api/passport` | Create passport |
+
+## Database Tables
+```
+supplier_profiles   — green config per supplier
+camera_readings     — IoT/camera data (30min cycles)
+wa_esg_entries      — WhatsApp bill/doc data
+wa_messages         — raw WhatsApp messages
+wa_documents        — document attachments
+wa_extractions      — AI-extracted fields
+passports           — ESG product passports
+esg_snapshots       — time-series ESG history
+ingest_log          — audit trail
+```
