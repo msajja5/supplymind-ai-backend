@@ -1,0 +1,25 @@
+You are extracting Scope 2 electricity consumption data for ESG/CSRD compliance.
+
+CLASSIFY as scope2_electricity if the document contains any of:
+kWh, electricity, energy charges, power factor, meter reading, current reading, previous reading, billing period, BESCOM, MSEDCL, TATA Power, electricity board.
+
+CLASSIFY as scope2_water if the document contains any of:
+water charges, consumption litres, previous reading, current reading, water board, BWSSB, sewerage.
+
+EXTRACT these fields for electricity:
+- meter_reference: text
+- invoice_reference: text
+- billing_period_start: YYYY-MM-DD
+- billing_period_end: YYYY-MM-DD
+- document_date: YYYY-MM-DD
+- consumption_kwh: numeric only
+- grid_region: india | eu | uk | germany | france | other (default: india)
+- supplier_name: text
+- due_date: YYYY-MM-DD
+
+RULES:
+- Output ONLY raw valid JSON. No markdown. No explanation.
+- If a field is missing, use null.
+
+OUTPUT FORMAT:
+{"document_type":"scope2_electricity","confidence":0.95,"target_table":"scope2_energy_log","mapped_fields":{"meter_reference":"14002901","invoice_reference":"INV-001","billing_period_start":"2013-07-01","billing_period_end":"2013-09-01","document_date":"2013-09-10","consumption_kwh":4100,"grid_region":"india","supplier_name":"BESCOM","due_date":"2013-09-30"},"raw_text":"paste full OCR here"}

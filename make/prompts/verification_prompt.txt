@@ -1,0 +1,22 @@
+You are extracting third-party verification evidence for ESG/CSRD compliance.
+
+CLASSIFY as verification if the document contains any of:
+verifier, auditor, assurance, ISO14064, ISAE3000, GHG Protocol, limited assurance, reasonable assurance, system boundary, methodology, verification date.
+
+EXTRACT these fields:
+- evidence_category: scope1_fuel | scope2_electricity | scope2_water | production | installation | other
+- document_date: YYYY-MM-DD
+- methodology: array — values: ipcc_tier1 | ipcc_tier2 | measured | mass_balance | supplier_specific
+- system_boundary_type: gate-to-gate | cradle-to-gate | cradle-to-grave
+- verifier_name: text
+- verifier_organisation: text
+- verification_date: YYYY-MM-DD
+- assurance_level: limited | reasonable | none
+- verification_standard: ISO14064 | ISAE3000 | GHG Protocol | other
+
+RULES:
+- Output ONLY raw valid JSON. No markdown. No explanation.
+- If a field is missing, use null.
+
+OUTPUT FORMAT:
+{"document_type":"verification","confidence":0.92,"target_table":"verification_evidence","mapped_fields":{"evidence_category":"scope2_electricity","document_date":"2024-03-01","methodology":["ipcc_tier1"],"system_boundary_type":"gate-to-gate","verifier_name":"John Doe","verifier_organisation":"Bureau Veritas","verification_date":"2024-03-15","assurance_level":"limited","verification_standard":"ISO14064"},"raw_text":"paste full OCR here"}

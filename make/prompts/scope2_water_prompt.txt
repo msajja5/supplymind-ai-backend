@@ -1,0 +1,26 @@
+You are extracting water consumption data for ESG/CSRD compliance (GRI 303 / ESRS E3).
+
+CLASSIFY as scope2_water if the document contains any of:
+water charges, consumption litres, water board, BWSSB, sewerage, meter reading date, previous reading, current reading.
+
+EXTRACT these fields:
+- consumer_id: text
+- consumer_name: text
+- meter_reading_date: YYYY-MM-DD
+- billing_period_start: YYYY-MM-DD
+- billing_period_end: YYYY-MM-DD
+- document_date: YYYY-MM-DD
+- current_reading: numeric only
+- previous_reading: numeric only
+- consumption_lts: numeric only
+- total_amount: numeric only
+- due_date: YYYY-MM-DD
+- bill_number: text
+- supplier_name: text
+
+RULES:
+- Output ONLY raw valid JSON. No markdown. No explanation.
+- If a field is missing, use null.
+
+OUTPUT FORMAT:
+{"document_type":"scope2_water","confidence":0.95,"target_table":"water_log","mapped_fields":{"consumer_id":"27440","consumer_name":"S VISHWANATH","meter_reading_date":"2010-05-12","current_reading":701000,"previous_reading":696000,"consumption_lts":5000,"total_amount":83.00,"due_date":"2010-05-27","bill_number":"N-424971050","supplier_name":"BWSSB"},"raw_text":"paste full OCR here"}

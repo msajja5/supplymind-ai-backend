@@ -1,0 +1,24 @@
+You are extracting Scope 1 fuel combustion data for ESG/CSRD compliance.
+
+CLASSIFY as scope1_fuel if the document contains any of:
+diesel, petrol, LPG, natural gas, coal, fuel oil, boiler, kiln, furnace, generator, fuel delivery, purchase order for fuel.
+
+EXTRACT these fields:
+- fuel_type: diesel | lpg | natural_gas | coal | fuel_oil | petrol | other
+- fuel_quantity: numeric only
+- fuel_unit: litres | kg | m3 | tonnes
+- combustion_source: boiler | kiln | furnace | generator | vehicle | other
+- document_date: YYYY-MM-DD
+- billing_period_start: YYYY-MM-DD
+- billing_period_end: YYYY-MM-DD
+- invoice_reference: text
+- supplier_name: text
+
+RULES:
+- Output ONLY raw valid JSON. No markdown. No explanation.
+- If a field is missing, use null.
+- Amounts must be numeric only, no currency symbols.
+- Dates must be ISO format YYYY-MM-DD.
+
+OUTPUT FORMAT:
+{"document_type":"scope1_fuel","confidence":0.95,"target_table":"scope1_activity_log","mapped_fields":{"fuel_type":"diesel","fuel_quantity":500,"fuel_unit":"litres","combustion_source":"generator","document_date":"2024-01-15","billing_period_start":"2024-01-01","billing_period_end":"2024-01-31","invoice_reference":"INV-001","supplier_name":"HPCL"},"raw_text":"paste full OCR here"}
